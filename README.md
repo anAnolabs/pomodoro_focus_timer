@@ -1,51 +1,48 @@
-# 🍅 Pomodoro Focus Timer
+# 🍅 FocusFlow: Advanced Pomodoro Timer
 
-A beautiful, minimal Pomodoro Focus Timer built as a **single HTML file** — no installation, no build tools required.
+A beautiful, minimal, yet feature-rich Pomodoro Focus Timer built with **Vanilla HTML, CSS, and JavaScript**. Zero build tools required, but packed with advanced productivity features.
 
-## Features
+## ✨ Features
 
-- ⏱ **25-minute work sessions** + **5-minute break** cycles with automatic switching
-- 🔔 **Sound notification** (Web Audio API) when a session ends
-- ▶ **Start / Pause / Resume / Reset / Skip** controls
-- 📊 **Live stats**: sessions completed, total focus time, streak
-- 🌙 **Dark / Light mode** toggle
-- ⌨️ **Keyboard shortcuts**: `Space` = start/pause, `R` = reset, `S` = skip
-- 💥 Animated SVG ring progress indicator
-- 🎨 Glassmorphism card with animated gradient background blobs
+- ⏱ **Customizable Timer**: Configure Focus, Short Break, and Long Break durations. 
+- 🔁 **Auto-Cycles**: Automatically switches to Long Break after 4 focus sessions.
+- 📋 **Task Management**: Add tasks, estimate required Pomodoros, and track completion right from the dashboard.
+- 🌱 **Virtual Garden (Gamification)**: Plant a tree during your focus session. If you switch tabs and leave the timer, your tree will die! Successfully complete the session to grow your forest.
+- 📊 **Statistics**: Session numbers, focus time, and a 7-day activity chart.
+- 🎧 **Ambient Sounds**: Built-in rain, cafe, and ocean sounds to boost concentration.
+- 🌙 **Dark / Light Mode**: Smooth, glassmorphism UI that respects your system preference or manual toggle.
+- 💾 **Local Storage**: All your tasks, settings, garden history, and statistics are saved locally in your browser.
 
-## How to Run
+## 🚀 How to Run
 
-1. Open `index.html` directly in any modern browser (Chrome, Firefox, Safari, Edge):
-   ```
-   open index.html          # macOS
-   start index.html         # Windows
-   xdg-open index.html      # Linux
-   ```
-2. Or serve with any local HTTP server:
+Since it uses standard web technologies, running it is incredibly simple:
+
+1. Serve it locally using any HTTP server:
    ```bash
-   npx serve .
-   # or
+   # Using Python 3
    python3 -m http.server 8080
+
+   # Or using Node/npx
+   npx serve .
    ```
+2. Open your browser and navigate to `http://localhost:8080` (or the port provided).
 
-## Keyboard Shortcuts
+> **Note:** Opening `index.html` directly via the `file://` protocol works for most features, but running a local server is recommended to ensure all `localStorage` and audio features behave perfectly.
 
-| Key     | Action        |
-|---------|--------------|
-| `Space` | Start / Pause |
-| `R`     | Reset         |
-| `S`     | Skip session  |
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 Pomodoro/
-└── index.html    ← Entire app (HTML + CSS + JS, self-contained)
+├── index.html    ← The main UI layout
+├── styles.css    ← Design tokens, flexbox/grid layouts, animations
+├── app.js        ← Core timer logic, local storage, gamification
 └── README.md     ← This file
 ```
 
-## Tech Stack
-
-- Vanilla **HTML5 / CSS3 / JavaScript** — zero dependencies
-- **Web Audio API** for sound notifications
-- **Google Fonts** (Inter + Space Mono) loaded via CDN
+## 🛠 Tech Stack
+- Vanilla HTML5 / CSS3 / JavaScript
+- CSS Variables for easy theming
+- CSS Grid/Flexbox for responsive design
+- LocalStorage API for data persistence
+- Page Visibility API for gamification penalty
+- Web Audio API / HTML5 Audio for ambient sounds and beeps

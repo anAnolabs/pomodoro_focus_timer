@@ -4,611 +4,188 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pomodoro Focus Timer</title>
-  <meta name="description" content="A beautiful Pomodoro Focus Timer to boost your productivity with 25-minute work sessions and 5-minute break cycles." />
+  <meta name="description" content="A beautiful Pomodoro Timer to boost productivity with task management and gamification." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-  <style>
-    /* ─── Design Tokens ─────────────────────────────── */
-    :root {
-      --bg:          #0f0f13;
-      --surface:     #1a1a24;
-      --surface2:    #242433;
-      --border:      rgba(255,255,255,0.08);
-      --text:        #f0f0f8;
-      --text-muted:  #8888aa;
-      --work-from:   #f97316;
-      --work-to:     #ec4899;
-      --break-from:  #22d3ee;
-      --break-to:    #6366f1;
-      --accent:      var(--work-from);
-      --ring:        rgba(249,115,22,0.35);
-      --radius:      20px;
-      --shadow:      0 24px 80px rgba(0,0,0,0.6);
-    }
-    [data-theme="light"] {
-      --bg:         #f4f4fa;
-      --surface:    #ffffff;
-      --surface2:   #ededf7;
-      --border:     rgba(0,0,0,0.08);
-      --text:       #111122;
-      --text-muted: #666688;
-      --ring:       rgba(249,115,22,0.25);
-      --shadow:     0 24px 80px rgba(0,0,0,0.12);
-    }
-
-    /* ─── Reset & Base ──────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      transition: background 0.4s, color 0.4s;
-      overflow: hidden;
-    }
-
-    /* Animated background blobs */
-    .blob {
-      position: fixed;
-      border-radius: 50%;
-      filter: blur(100px);
-      opacity: 0.18;
-      pointer-events: none;
-      z-index: 0;
-      animation: drift 18s ease-in-out infinite alternate;
-    }
-    .blob-1 { width: 500px; height: 500px; top: -150px; left: -150px; background: var(--work-from); animation-delay: 0s; }
-    .blob-2 { width: 400px; height: 400px; bottom: -120px; right: -100px; background: var(--work-to); animation-delay: -5s; }
-    .blob-3 { width: 300px; height: 300px; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--break-from); animation-delay: -10s; }
-    [data-theme="light"] .blob { opacity: 0.10; }
-
-    @keyframes drift {
-      from { transform: translate(0, 0) scale(1); }
-      to   { transform: translate(30px, 20px) scale(1.08); }
-    }
-    .blob-3 { animation-name: drift3; }
-    @keyframes drift3 {
-      from { transform: translate(-50%, -50%) scale(1); }
-      to   { transform: translate(calc(-50% + 20px), calc(-50% + 15px)) scale(1.08); }
-    }
-
-    /* ─── Card ─────────────────────────────────────── */
-    .card {
-      position: relative;
-      z-index: 1;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 48px 52px;
-      max-width: 480px;
-      width: 100%;
-      text-align: center;
-      backdrop-filter: blur(20px);
-      transition: background 0.4s, border-color 0.4s, box-shadow 0.4s;
-    }
-
-    /* ─── Header ────────────────────────────────────── */
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 36px;
-    }
-    .app-title {
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-    }
-
-    /* Mode toggle (work / break tabs) */
-    .mode-tabs {
-      display: flex;
-      background: var(--surface2);
-      border-radius: 50px;
-      padding: 4px;
-      gap: 2px;
-      margin-bottom: 40px;
-      border: 1px solid var(--border);
-    }
-    .mode-tab {
-      flex: 1;
-      padding: 7px 18px;
-      border: none;
-      border-radius: 50px;
-      font-family: 'Inter', sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      background: transparent;
-      color: var(--text-muted);
-      transition: all 0.25s ease;
-      letter-spacing: 0.04em;
-    }
-    .mode-tab.active {
-      background: linear-gradient(135deg, var(--work-from), var(--work-to));
-      color: #fff;
-      box-shadow: 0 4px 14px rgba(249,115,22,0.35);
-    }
-    .mode-tab.active[data-mode="break"] {
-      background: linear-gradient(135deg, var(--break-from), var(--break-to));
-      box-shadow: 0 4px 14px rgba(99,102,241,0.35);
-    }
-
-    /* ─── Ring timer ────────────────────────────────── */
-    .ring-container {
-      position: relative;
-      width: 240px;
-      height: 240px;
-      margin: 0 auto 36px;
-    }
-    .ring-svg {
-      width: 100%;
-      height: 100%;
-      transform: rotate(-90deg);
-    }
-    .ring-track {
-      fill: none;
-      stroke: var(--surface2);
-      stroke-width: 10;
-    }
-    .ring-progress {
-      fill: none;
-      stroke-width: 10;
-      stroke-linecap: round;
-      stroke: url(#workGrad);
-      transition: stroke-dashoffset 1s linear, stroke 0.4s;
-    }
-    .ring-inner {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    .timer-display {
-      font-family: 'Space Mono', monospace;
-      font-size: 52px;
-      font-weight: 700;
-      letter-spacing: -1px;
-      background: linear-gradient(135deg, var(--work-from), var(--work-to));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      line-height: 1;
-      transition: background 0.4s;
-    }
-    .timer-display.break-mode {
-      background: linear-gradient(135deg, var(--break-from), var(--break-to));
-      -webkit-background-clip: text;
-      background-clip: text;
-    }
-    .session-label {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-top: 6px;
-    }
-
-    /* ─── Controls ──────────────────────────────────── */
-    .controls {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      margin-bottom: 32px;
-    }
-    .btn {
-      border: none;
-      border-radius: 50px;
-      cursor: pointer;
-      font-family: 'Inter', sans-serif;
-      font-weight: 600;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    .btn:active { transform: scale(0.95); }
-    .btn-primary {
-      padding: 14px 40px;
-      font-size: 15px;
-      background: linear-gradient(135deg, var(--work-from), var(--work-to));
-      color: #fff;
-      box-shadow: 0 8px 24px var(--ring);
-      letter-spacing: 0.04em;
-    }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 32px var(--ring); }
-    .btn-primary.break-mode {
-      background: linear-gradient(135deg, var(--break-from), var(--break-to));
-      box-shadow: 0 8px 24px rgba(99,102,241,0.4);
-    }
-    .btn-secondary {
-      padding: 14px 22px;
-      font-size: 15px;
-      background: var(--surface2);
-      color: var(--text-muted);
-      border: 1px solid var(--border);
-    }
-    .btn-secondary:hover { background: var(--border); color: var(--text); }
-
-    /* ─── Stats row ─────────────────────────────────── */
-    .stats {
-      display: flex;
-      justify-content: center;
-      gap: 32px;
-      padding-top: 24px;
-      border-top: 1px solid var(--border);
-    }
-    .stat { text-align: center; }
-    .stat-value {
-      font-size: 22px;
-      font-weight: 700;
-      background: linear-gradient(135deg, var(--work-from), var(--work-to));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .stat-label {
-      font-size: 11px;
-      color: var(--text-muted);
-      font-weight: 500;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-top: 2px;
-    }
-
-    /* ─── Theme toggle button ───────────────────────── */
-    .theme-btn {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      border-radius: 50%;
-      width: 36px;
-      height: 36px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .theme-btn:hover { color: var(--text); background: var(--border); }
-
-    /* ─── Notification toast ────────────────────────── */
-    .toast {
-      position: fixed;
-      top: 24px;
-      left: 50%;
-      transform: translateX(-50%) translateY(-80px);
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 50px;
-      padding: 12px 24px;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text);
-      box-shadow: var(--shadow);
-      z-index: 100;
-      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      white-space: nowrap;
-    }
-    .toast.show { transform: translateX(-50%) translateY(0); }
-    .toast-icon { font-size: 18px; }
-
-    /* ─── Pulse animation on active ─────────────────── */
-    @keyframes pulse-ring {
-      0%   { box-shadow: 0 0 0 0 var(--ring); }
-      70%  { box-shadow: 0 0 0 16px transparent; }
-      100% { box-shadow: 0 0 0 0 transparent; }
-    }
-    .btn-primary.pulsing { animation: pulse-ring 2s infinite; }
-
-    /* ─── Responsive ────────────────────────────────── */
-    @media (max-width: 520px) {
-      .card { padding: 36px 28px; }
-      .ring-container { width: 200px; height: 200px; }
-      .timer-display { font-size: 44px; }
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="blob blob-1" id="blob1"></div>
-  <div class="blob blob-2" id="blob2"></div>
-  <div class="blob blob-3" id="blob3"></div>
+  <!-- Animated Background Blobs -->
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
 
-  <div class="card" id="card">
-    <div class="header">
-      <span class="app-title">🍅 Pomodoro</span>
-      <button class="theme-btn" id="themeBtn" title="Toggle theme">🌙</button>
+  <!-- Top App Header -->
+  <header class="app-header">
+    <div class="logo">🍅 FocusFlow</div>
+    <div class="header-actions">
+      <button class="icon-btn" id="btnGarden" title="Virtual Garden">🌱</button>
+      <button class="icon-btn" id="btnStats" title="Statistics">📊</button>
+      <button class="icon-btn" id="btnSettings" title="Settings">⚙️</button>
+      <button class="icon-btn" id="btnTheme" title="Toggle Theme">🌙</button>
     </div>
+  </header>
 
-    <div class="mode-tabs">
-      <button class="mode-tab active" id="workTab" data-mode="work">Focus</button>
-      <button class="mode-tab" id="breakTab" data-mode="break">Break</button>
-    </div>
-
-    <!-- SVG ring -->
-    <div class="ring-container">
-      <svg class="ring-svg" viewBox="0 0 240 240" aria-hidden="true">
-        <defs>
-          <linearGradient id="workGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#f97316" />
-            <stop offset="100%" style="stop-color:#ec4899" />
-          </linearGradient>
-          <linearGradient id="breakGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#22d3ee" />
-            <stop offset="100%" style="stop-color:#6366f1" />
-          </linearGradient>
-        </defs>
-        <circle class="ring-track" cx="120" cy="120" r="108" />
-        <circle class="ring-progress" id="ringProgress" cx="120" cy="120" r="108"
-                stroke-dasharray="678.58"
-                stroke-dashoffset="0" />
-      </svg>
-      <div class="ring-inner">
-        <div class="timer-display" id="timerDisplay">25:00</div>
-        <div class="session-label" id="sessionLabel">Focus Session</div>
+  <!-- Main Container -->
+  <div class="container">
+    <!-- Main Timer Card -->
+    <main class="card timer-card">
+      <div class="mode-tabs">
+        <button class="mode-tab active" id="tabWork" data-mode="work">Focus</button>
+        <button class="mode-tab" id="tabShortBreak" data-mode="shortBreak">Short Break</button>
+        <button class="mode-tab" id="tabLongBreak" data-mode="longBreak">Long Break</button>
       </div>
-    </div>
 
-    <div class="controls">
-      <button class="btn btn-secondary" id="resetBtn" title="Reset timer">↺</button>
-      <button class="btn btn-primary pulsing" id="startBtn">▶&nbsp; Start</button>
-      <button class="btn btn-secondary" id="skipBtn" title="Skip to next session">⏭</button>
-    </div>
+      <div class="ring-container">
+        <svg class="ring-svg" viewBox="0 0 240 240" aria-hidden="true">
+          <defs>
+            <linearGradient id="workGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color: #f97316" />
+              <stop offset="100%" style="stop-color: #ec4899" />
+            </linearGradient>
+            <linearGradient id="shortBreakGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color: #22d3ee" />
+              <stop offset="100%" style="stop-color: #6366f1" />
+            </linearGradient>
+            <linearGradient id="longBreakGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color: #10b981" />
+              <stop offset="100%" style="stop-color: #3b82f6" />
+            </linearGradient>
+          </defs>
+          <circle class="ring-track" cx="120" cy="120" r="108" />
+          <circle class="ring-progress" id="ringProgress" cx="120" cy="120" r="108" stroke-dasharray="678.58" stroke-dashoffset="0" />
+        </svg>
+        <div class="ring-inner">
+          <div class="plant-emoji" id="plantEmoji">🌱</div>
+          <div class="timer-display" id="timerDisplay">25:00</div>
+          <div class="session-label" id="sessionLabel">Focus Session</div>
+          <div class="active-task-label" id="activeTaskLabel">Ready to focus</div>
+        </div>
+      </div>
 
-    <div class="stats">
-      <div class="stat">
-        <div class="stat-value" id="sessionsCount">0</div>
-        <div class="stat-label">Sessions</div>
+      <div class="controls">
+        <button class="btn btn-secondary" id="resetBtn" title="Reset timer">↺</button>
+        <button class="btn btn-primary pulsing" id="startBtn">▶&nbsp; Start</button>
+        <button class="btn btn-secondary" id="skipBtn" title="Skip to next session">⏭</button>
       </div>
-      <div class="stat">
-        <div class="stat-value" id="focusTime">0m</div>
-        <div class="stat-label">Focus Time</div>
+
+      <div class="ambient-sounds">
+        <span class="ambient-label">Ambient Noise:</span>
+        <select id="ambientSelect" class="styled-select">
+          <option value="none">🔇 None</option>
+          <option value="rain">🌧️ Rain (Light)</option>
+          <option value="cafe">☕ Cafe Vibes</option>
+          <option value="ocean">🌊 Ocean Waves</option>
+        </select>
       </div>
-      <div class="stat">
-        <div class="stat-value" id="streakCount">0</div>
-        <div class="stat-label">Streak</div>
+    </main>
+
+    <!-- Task Management Sidebar -->
+    <aside class="card task-card">
+      <div class="task-header">
+        <h3>Tasks</h3>
+        <div class="task-header-stats">
+          <span title="Completed Pomodoros Today">🍅 <span id="tasksPomoCount">0</span></span>
+        </div>
+      </div>
+      <div class="task-input-container">
+        <input type="text" id="newTaskInput" placeholder="What are you working on?" autocomplete="off" />
+        <input type="number" id="newTaskEst" class="est-input" title="Est. Pomodoros" placeholder="Est" min="1" max="10" value="1" />
+        <button id="addTaskBtn" class="btn btn-primary btn-small">+</button>
+      </div>
+      <!-- Task list scrolls if overflows -->
+      <ul class="task-list" id="taskList">
+        <!-- JS will render tasks here -->
+      </ul>
+    </aside>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-content card">
+      <div class="modal-header">
+        <h3>⚙️ Settings</h3>
+        <button class="close-modal" id="closeSettings">×</button>
+      </div>
+      <div class="settings-group">
+        <h4>Timer Setup (Minutes)</h4>
+        <div class="settings-row">
+          <label for="settingFocus">Focus</label>
+          <input type="number" id="settingFocus" value="25" min="1" max="120" />
+        </div>
+        <div class="settings-row">
+          <label for="settingShortBreak">Short Break</label>
+          <input type="number" id="settingShortBreak" value="5" min="1" max="60" />
+        </div>
+        <div class="settings-row">
+          <label for="settingLongBreak">Long Break</label>
+          <input type="number" id="settingLongBreak" value="15" min="1" max="60" />
+        </div>
+        <div class="settings-row">
+          <label for="settingLongBreakInterval">Long Break Interval</label>
+          <input type="number" id="settingLongBreakInterval" value="4" min="1" max="10" title="Number of focus sessions before long break" />
+        </div>
+      </div>
+      <div class="settings-group">
+        <h4>Notifications</h4>
+        <div class="settings-row checkbox-row">
+          <label for="settingSoundEnabled">Sound Enabled</label>
+          <input type="checkbox" id="settingSoundEnabled" checked />
+        </div>
+      </div>
+      <button class="btn btn-primary" id="saveSettingsBtn" style="width:100%; margin-top: 10px;">Save Changes</button>
+    </div>
+  </div>
+
+  <!-- Stats Modal -->
+  <div class="modal-overlay" id="statsModal">
+    <div class="modal-content card">
+      <div class="modal-header">
+        <h3>📊 Statistics</h3>
+        <button class="close-modal" id="closeStats">×</button>
+      </div>
+      <div class="stats-summary">
+        <div class="stat-box">
+          <div class="stat-val" id="statTotalFocus">0h 0m</div>
+          <div class="stat-lbl">Total Focus Time</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="statTotalPomodoros">0</div>
+          <div class="stat-lbl">Pomodoros</div>
+        </div>
+      </div>
+      <div class="chart-container">
+        <!-- CSS-based bar chart generated via JS -->
+        <h4>Last 7 Days (Pomodoros)</h4>
+        <div class="activity-chart" id="activityChart"></div>
       </div>
     </div>
   </div>
 
-  <!-- Toast notification -->
+  <!-- Garden Modal -->
+  <div class="modal-overlay" id="gardenModal">
+    <div class="modal-content card">
+      <div class="modal-header">
+        <h3>🌱 Virtual Garden</h3>
+        <button class="close-modal" id="closeGarden">×</button>
+      </div>
+      <p class="garden-subtitle">Your forest of focus. Every completed session grows a tree.</p>
+      <div class="garden-grid" id="gardenGrid">
+        <!-- Trees appended via JS -->
+      </div>
+      <div class="garden-stats">
+        Trees Planted: <strong id="gardenTreeCount">0</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
   <div class="toast" id="toast">
     <span class="toast-icon" id="toastIcon">🎉</span>
     <span id="toastMsg">Time's up!</span>
   </div>
 
-  <script>
-    /* ─── State ──────────────────────────────────────── */
-    const WORK_SECS  = 25 * 60;
-    const BREAK_SECS = 5  * 60;
-
-    let mode       = 'work';   // 'work' | 'break'
-    let isRunning  = false;
-    let timeLeft   = WORK_SECS;
-    let totalTime  = WORK_SECS;
-    let intervalId = null;
-
-    let sessionsCompleted = 0;
-    let focusMinutes      = 0;
-    let streak            = 0;
-    let sessionStartTime  = null;
-
-    /* ─── DOM refs ───────────────────────────────────── */
-    const timerDisplay   = document.getElementById('timerDisplay');
-    const sessionLabel   = document.getElementById('sessionLabel');
-    const startBtn       = document.getElementById('startBtn');
-    const resetBtn       = document.getElementById('resetBtn');
-    const skipBtn        = document.getElementById('skipBtn');
-    const workTab        = document.getElementById('workTab');
-    const breakTab       = document.getElementById('breakTab');
-    const ringProgress   = document.getElementById('ringProgress');
-    const themeBtn       = document.getElementById('themeBtn');
-    const toast          = document.getElementById('toast');
-    const toastMsg       = document.getElementById('toastMsg');
-    const toastIcon      = document.getElementById('toastIcon');
-    const sessionsCount  = document.getElementById('sessionsCount');
-    const focusTimeEl    = document.getElementById('focusTime');
-    const streakCount    = document.getElementById('streakCount');
-    const html           = document.documentElement;
-
-    const CIRCUMFERENCE = 2 * Math.PI * 108; // ≈ 678.58
-
-    /* ─── Helpers ────────────────────────────────────── */
-    function formatTime(secs) {
-      const m = Math.floor(secs / 60).toString().padStart(2, '0');
-      const s = (secs % 60).toString().padStart(2, '0');
-      return `${m}:${s}`;
-    }
-
-    function updateRing() {
-      const fraction = timeLeft / totalTime;
-      ringProgress.style.strokeDashoffset = CIRCUMFERENCE * (1 - fraction);
-    }
-
-    function updateDisplay() {
-      timerDisplay.textContent = formatTime(timeLeft);
-      document.title = `${formatTime(timeLeft)} — ${mode === 'work' ? 'Focus' : 'Break'} | Pomodoro`;
-      updateRing();
-    }
-
-    function setMode(newMode) {
-      mode      = newMode;
-      totalTime = mode === 'work' ? WORK_SECS : BREAK_SECS;
-      timeLeft  = totalTime;
-      isRunning = false;
-      clearInterval(intervalId);
-
-      // UI sync
-      workTab.classList.toggle('active', mode === 'work');
-      breakTab.classList.toggle('active', mode === 'break');
-
-      const isBreak = mode === 'break';
-      timerDisplay.classList.toggle('break-mode', isBreak);
-      startBtn.classList.toggle('break-mode', isBreak);
-      ringProgress.setAttribute('stroke', isBreak ? 'url(#breakGrad)' : 'url(#workGrad)');
-      sessionLabel.textContent = isBreak ? 'Short Break' : 'Focus Session';
-
-      // Adjust blob colors via CSS vars
-      document.documentElement.style.setProperty('--accent', isBreak ? 'var(--break-from)' : 'var(--work-from)');
-      document.documentElement.style.setProperty('--ring',   isBreak ? 'rgba(99,102,241,0.35)' : 'rgba(249,115,22,0.35)');
-
-      startBtn.innerHTML = '▶&nbsp; Start';
-      startBtn.classList.add('pulsing');
-      updateDisplay();
-    }
-
-    function updateStats() {
-      sessionsCount.textContent = sessionsCompleted;
-      focusTimeEl.textContent   = focusMinutes + 'm';
-      streakCount.textContent   = streak;
-    }
-
-    /* ─── Audio (Web Audio API beep) ────────────────── */
-    function playBeep() {
-      try {
-        const ctx  = new (window.AudioContext || window.webkitAudioContext)();
-        const osc  = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type      = 'sine';
-        osc.frequency.setValueAtTime(880, ctx.currentTime);
-        gain.gain.setValueAtTime(0.4, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 1.2);
-        // Play a second blip
-        setTimeout(() => {
-          const o2 = ctx.createOscillator();
-          const g2 = ctx.createGain();
-          o2.connect(g2); g2.connect(ctx.destination);
-          o2.type = 'sine';
-          o2.frequency.setValueAtTime(1100, ctx.currentTime);
-          g2.gain.setValueAtTime(0.3, ctx.currentTime);
-          g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
-          o2.start(ctx.currentTime);
-          o2.stop(ctx.currentTime + 0.8);
-        }, 400);
-      } catch(e) { /* audio not available */ }
-    }
-
-    /* ─── Toast ─────────────────────────────────────── */
-    let toastTimer;
-    function showToast(icon, msg) {
-      toastIcon.textContent = icon;
-      toastMsg.textContent  = msg;
-      toast.classList.add('show');
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
-    }
-
-    /* ─── Timer Logic ────────────────────────────────── */
-    function tick() {
-      if (timeLeft <= 0) {
-        clearInterval(intervalId);
-        isRunning = false;
-        playBeep();
-
-        if (mode === 'work') {
-          sessionsCompleted++;
-          focusMinutes += 25;
-          streak++;
-          updateStats();
-          showToast('🎯', 'Focus session done! Time for a break.');
-          setMode('break');
-        } else {
-          showToast('🍅', 'Break over! Ready to focus?');
-          setMode('work');
-        }
-        return;
-      }
-      timeLeft--;
-      updateDisplay();
-    }
-
-    function start() {
-      if (isRunning) {
-        // Pause
-        clearInterval(intervalId);
-        isRunning = false;
-        startBtn.innerHTML = '▶&nbsp; Resume';
-        startBtn.classList.remove('pulsing');
-      } else {
-        // Start / Resume
-        isRunning = true;
-        intervalId = setInterval(tick, 1000);
-        startBtn.innerHTML = '⏸&nbsp; Pause';
-        startBtn.classList.remove('pulsing');
-      }
-    }
-
-    function reset() {
-      clearInterval(intervalId);
-      isRunning = false;
-      timeLeft  = totalTime;
-      startBtn.innerHTML = '▶&nbsp; Start';
-      startBtn.classList.add('pulsing');
-      updateDisplay();
-    }
-
-    function skip() {
-      clearInterval(intervalId);
-      isRunning = false;
-      if (mode === 'work') {
-        sessionsCompleted++;
-        focusMinutes += Math.round((WORK_SECS - timeLeft) / 60);
-        updateStats();
-        setMode('break');
-        showToast('⏭', 'Skipped to break.');
-      } else {
-        setMode('work');
-        showToast('⏭', 'Skipped to focus session.');
-      }
-    }
-
-    /* ─── Events ─────────────────────────────────────── */
-    startBtn.addEventListener('click', start);
-    resetBtn.addEventListener('click', reset);
-    skipBtn.addEventListener('click', skip);
-
-    workTab.addEventListener('click', () => { if (mode !== 'work') { clearInterval(intervalId); setMode('work'); } });
-    breakTab.addEventListener('click', () => { if (mode !== 'break') { clearInterval(intervalId); setMode('break'); } });
-
-    themeBtn.addEventListener('click', () => {
-      const isDark = html.dataset.theme === 'dark';
-      html.dataset.theme = isDark ? 'light' : 'dark';
-      themeBtn.textContent = isDark ? '☀️' : '🌙';
-    });
-
-    /* ─── Keyboard shortcuts ─────────────────────────── */
-    document.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' && e.target === document.body) { e.preventDefault(); start(); }
-      if (e.code === 'KeyR') reset();
-      if (e.code === 'KeyS') skip();
-    });
-
-    /* ─── Init ───────────────────────────────────────── */
-    updateDisplay();
-    updateStats();
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>
